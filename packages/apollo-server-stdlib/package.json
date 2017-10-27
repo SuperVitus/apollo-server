@@ -1,0 +1,48 @@
+{
+  "name": "apollo-server-actionhero",
+  "version": "1.0.2",
+  "description": "Production-ready Node.js GraphQL server for Actionhero",
+  "main": "dist/index.js",
+  "scripts": {
+    "compile": "tsc",
+    "prepublish": "npm run compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apollographql/apollo-server/tree/master/packages/apollo-server-actionhero"
+  },
+  "keywords": [
+    "GraphQL",
+    "Apollo",
+    "Server",
+    "Actionhero",
+    "Javascript"
+  ],
+  "author": "Devin Despain <devin@dspa.in>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/apollographql/apollo-server/issues"
+  },
+  "homepage": "https://github.com/apollographql/apollo-server#readme",
+  "dependencies": {
+    "actionhero": "^17.0.3",
+    "apollo-server-core": "^1.0.2",
+    "apollo-server-module-graphiql": "^1.0.2",
+    "boom": "^6.0.0",
+    "typescript": "^1.6.2"
+  },
+  "devDependencies": {
+    "apollo-server-integration-testsuite": "^1.0.2",
+    "actionhero": "^17.0.3"
+  },
+  "peerDependencies": {
+    "graphql": "^0.9.0 || ^0.10.1"
+  },
+  "optionalDependencies": {
+    "@types/graphql": "^0.9.1"
+  },
+  "typings": "dist/index.d.ts",
+  "typescript": {
+    "definition": "dist/index.d.ts"
+  }
+}
