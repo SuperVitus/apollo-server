@@ -33,9 +33,9 @@ export function graphqlExpress(options: GraphQLOptions | ExpressGraphQLOptionsFu
       query: req.method === 'POST' ? req.body : req.query,
     }).then((gqlResponse) => {
       res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Length', Buffer.byteLength(gqlResponse, 'utf8'));
       res.write(gqlResponse);
       res.end();
-      next();
     }, (error: HttpQueryError) => {
       if ( 'HttpQueryError' !== error.name ) {
         return next(error);
@@ -50,7 +50,6 @@ export function graphqlExpress(options: GraphQLOptions | ExpressGraphQLOptionsFu
       res.statusCode = error.statusCode;
       res.write(error.message);
       res.end();
-      next(false);
     });
   };
 }

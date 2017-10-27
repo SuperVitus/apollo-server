@@ -1,11 +1,10 @@
-# GraphQL Server for Express, Connect, Hapi, Koa, Restify and AWS Lambda
+# GraphQL Server for Express, Connect, Hapi, Koa, Restify, Micro, Azure Functions, and AWS Lambda
 
 [![npm version](https://badge.fury.io/js/apollo-server-core.svg)](https://badge.fury.io/js/apollo-server-core)
 [![Build Status](https://travis-ci.org/apollographql/apollo-server.svg?branch=master)](https://travis-ci.org/apollographql/apollo-server)
-[![Coverage Status](https://coveralls.io/repos/github/apollographql/apollo-server/badge.svg?branch=master)](https://coveralls.io/github/apollographql/apollo-server?branch=master)
 [![Get on Slack](https://img.shields.io/badge/slack-join-orange.svg)](http://www.apollodata.com/#slack)
 
-Apollo Server is a community-maintained open-source GraphQL server. It works with all Node.js HTTP server frameworks: Express, Connect, Hapi, Koa and Restify. It is built on top of the [`graphql-js` reference implementation](https://github.com/graphql/graphql-js).
+Apollo Server is a community-maintained open-source GraphQL server. It works with pretty much all Node.js HTTP server frameworks, and we're happy to take PRs for more! It works with any GraphQL schema built with the [`graphql-js` reference implementation](https://github.com/graphql/graphql-js). 
 
 ## Principles
 
@@ -15,9 +14,7 @@ Apollo Server is built with the following principles in mind:
 * **Simplicity**: by keeping things simple, Apollo Server is easier to use, easier to contribute to, and more secure
 * **Performance**: Apollo Server is well-tested and production-ready - no modifications needed
 
-
 Anyone is welcome to contribute to Apollo Server, just read [CONTRIBUTING.md](./CONTRIBUTING.md), take a look at the [roadmap](./ROADMAP.md) and make your first PR!
-
 
 ## Getting started
 
@@ -34,13 +31,14 @@ where `<variant>` is one of the following:
  - `restify`
  - `lambda`
  - `micro`
+ - `azure-functions`
 
 ### Express
 
 ```js
 import express from 'express';
 import bodyParser from 'body-parser';
-import { graphqlExpress } from 'apollo-server-express';
+import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
 
 const myGraphQLSchema = // ... define or import your schema here!
 const PORT = 3000;
@@ -49,6 +47,7 @@ const app = express();
 
 // bodyParser is needed just for POST.
 app.use('/graphql', bodyParser.json(), graphqlExpress({ schema: myGraphQLSchema }));
+app.get('/graphiql', graphiqlExpress({ endpointURL: '/graphql' })); // if you want GraphiQL enabled
 
 app.listen(PORT);
 ```
@@ -79,7 +78,7 @@ Now with the Hapi plugins `graphqlHapi` and `graphiqlHapi` you can pass a route 
 import hapi from 'hapi';
 import { graphqlHapi } from 'apollo-server-hapi';
 
-const server = new hapi.Server();
+const server = new hapi.Server({ debug: { request: "*" } });
 
 const HOST = 'localhost';
 const PORT = 3000;
@@ -115,17 +114,17 @@ server.start((err) => {
 import koa from 'koa'; // koa@2
 import koaRouter from 'koa-router'; // koa-router@next
 import koaBody from 'koa-bodyparser'; // koa-bodyparser@next
-import { graphqlKoa } from 'apollo-server-koa';
+import { graphqlKoa, graphiqlKoa } from 'apollo-server-koa';
 
 const app = new koa();
 const router = new koaRouter();
 const PORT = 3000;
 
 // koaBody is needed just for POST.
-app.use(koaBody());
-
-router.post('/graphql', graphqlKoa({ schema: myGraphQLSchema }));
+router.post('/graphql', koaBody(), graphqlKoa({ schema: myGraphQLSchema }));
 router.get('/graphql', graphqlKoa({ schema: myGraphQLSchema }));
+
+router.get('/graphiql', graphiqlKoa({ endpointURL: '/graphql' }));
 
 app.use(router.routes());
 app.use(router.allowedMethods());
@@ -145,8 +144,8 @@ const server = restify.createServer({
 
 const graphQLOptions = { schema: myGraphQLSchema };
 
-server.use(restify.bodyParser());
-server.use(restify.queryParser());
+server.use(restify.plugins.bodyParser());
+server.use(restify.plugins.queryParser());
 
 server.post('/graphql', graphqlRestify(graphQLOptions));
 server.get('/graphql', graphqlRestify(graphQLOptions));
@@ -158,7 +157,7 @@ server.listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 ### AWS Lambda
 
-Lambda function should be run with Node.js v4.3. Requires an API Gateway with Lambda Proxy Integration.
+Lambda function should be run with [Node.js 4.3 or v6.1](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-using-old-runtime.html#nodejs-prog-model-runtime-support-policy). Requires an API Gateway with Lambda Proxy Integration.
 
 ```js
 var server = require("apollo-server-lambda");
@@ -187,6 +186,7 @@ Apollo Server can be configured with an options object with the following fields
 * **validationRules**: additional GraphQL validation rules to be applied to client-specified queries
 * **formatParams**: a function applied for each query in a batch to format parameters before execution
 * **formatResponse**: a function applied to each response after execution
+* **tracing**: when set to true, collect and expose trace data in the [Apollo Tracing format](https://github.com/apollographql/apollo-tracing)
 
 All options except for `schema` are optional.
 

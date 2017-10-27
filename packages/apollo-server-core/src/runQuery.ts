@@ -1,19 +1,26 @@
 import {
     GraphQLSchema,
+    GraphQLFieldResolver,
     ExecutionResult,
     DocumentNode,
     parse,
     print,
     validate,
     execute,
+    GraphQLError,
     formatError,
     specifiedRules,
     ValidationContext,
 } from 'graphql';
 
-export interface GqlResponse {
-    data?: Object;
-    errors?: Array<string>;
+import { enableGraphQLExtensions, GraphQLExtension, GraphQLExtensionStack } from 'graphql-extensions';
+import { TracingExtension } from 'apollo-tracing';
+import { CacheControlExtension } from 'apollo-cache-control';
+
+export interface GraphQLResponse {
+  data?: object;
+  errors?: Array<GraphQLError & object>;
+  extensions?: object;
 }
 
 export enum LogAction {
@@ -44,22 +51,25 @@ export interface QueryOptions {
  operationName?: string;
  logFunction?: LogFunction;
  validationRules?: Array<(context: ValidationContext) => any>;
+ fieldResolver?: GraphQLFieldResolver<any, any>;
  // WARNING: these extra validation rules are only applied to queries
  // submitted as string, not those submitted as Document!
 
  formatError?: Function;
  formatResponse?: Function;
  debug?: boolean;
+ tracing?: boolean;
+ cacheControl?: boolean;
 }
 
 const resolvedPromise = Promise.resolve();
 
-function runQuery(options: QueryOptions): Promise<ExecutionResult> {
+function runQuery(options: QueryOptions): Promise<GraphQLResponse> {
     // Fiber-aware Promises run their .then callbacks in Fibers.
     return resolvedPromise.then(() => doRunQuery(options));
 }
 
-function doRunQuery(options: QueryOptions): Promise<ExecutionResult> {
+function doRunQuery(options: QueryOptions): Promise<GraphQLResponse> {
     let documentAST: DocumentNode;
 
     const logFunction = options.logFunction || function(){ return null; };
@@ -67,6 +77,23 @@ function doRunQuery(options: QueryOptions): Promise<ExecutionResult> {
     const debug = typeof options.debug !== 'undefined' ? options.debug : debugDefault;
 
     logFunction({action: LogAction.request, step: LogStep.start});
+
+    const context = options.context || {};
+    let extensions = [];
+    if (options.tracing) {
+      extensions.push(TracingExtension);
+    }
+    if (options.cacheControl) {
+      extensions.push(CacheControlExtension);
+    }
+    const extensionStack = extensions.length > 0 && new GraphQLExtensionStack(extensions);
+
+    if (extensionStack) {
+      context._extensionStack = extensionStack;
+      enableGraphQLExtensions(options.schema);
+
+      extensionStack.requestDidStart();
+    }
 
     function format(errors: Array<Error>): Array<Error> {
         return errors.map((error) => {
@@ -119,30 +146,45 @@ function doRunQuery(options: QueryOptions): Promise<ExecutionResult> {
       return Promise.resolve({ errors: format(validationErrors) });
     }
 
+    if (extensionStack) {
+      extensionStack.executionDidStart();
+    }
+
     try {
         logFunction({action: LogAction.execute, step: LogStep.start});
         return execute(
             options.schema,
             documentAST,
             options.rootValue,
-            options.context,
+            context,
             options.variables,
             options.operationName,
-        ).then(gqlResponse => {
+            options.fieldResolver,
+        ).then(result => {
             logFunction({action: LogAction.execute, step: LogStep.end});
             logFunction({action: LogAction.request, step: LogStep.end});
-            let response = {
-                data: gqlResponse.data,
+
+            let response: GraphQLResponse = {
+                data: result.data,
             };
-            if (gqlResponse.errors) {
-                response['errors'] = format(gqlResponse.errors);
+
+            if (result.errors) {
+                response.errors = format(result.errors);
                 if (debug) {
-                  gqlResponse.errors.map(printStackTrace);
+                  result.errors.map(printStackTrace);
                 }
             }
+
+            if (extensionStack) {
+              extensionStack.executionDidEnd();
+              extensionStack.requestDidEnd();
+              response.extensions = extensionStack.format();
+            }
+
             if (options.formatResponse) {
                 response = options.formatResponse(response, options);
             }
+
             return response;
         });
     } catch (executionError) {

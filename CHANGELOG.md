@@ -1,6 +1,36 @@
 # Changelog
 
-### VNEXT
+### vNEXT
+* Added support for the vhost option for Hapi [PR #611](https://github.com/apollographql/apollo-server/pull/611)
+* Include readme for npm packages
+
+### v1.1.6
+* Fixes bug where CORS would not allow `Access-Control-Allow-Origin: *` with credential 'include', changed to 'same-origin' [Issue #514](https://github.com/apollographql/apollo-server/issues/514)
+* Update apollo-server-lambda README to reflect new package name.
+* Add support for connectionParams in GraphiQL plugin options [#452](https://github.com/apollographql/apollo-server/issues/452) [PR 548](https://github.com/apollographql/apollo-server/pull/548)
+
+### v1.1.2
+* Fixed bug with no URL query params with GraphiQL on Lambda [Issue #504](https://github.com/apollographql/apollo-server/issues/504) [PR #512](https://github.com/apollographql/apollo-server/pull/503)
+
+### v1.1.1
+* Added support for Azure Functions [#503](https://github.com/apollographql/apollo-server/pull/503)
+
+### v1.1.0
+
+* Added ability to provide custom default field resolvers [#482](https://github.com/apollographql/apollo-server/pull/482)
+* Add `tracing` option to collect and expose trace data in the [Apollo Tracing format](https://github.com/apollographql/apollo-tracing)
+* Add support for GraphiQL editor themes in [#484](https://github.com/apollographql/apollo-server/pull/484) as requested in [#444](https://github.com/apollographql/apollo-server/issues/444)
+* Add support for full websocket using GraphiQL [#491](https://github.com/apollographql/graphql-server/pull/491)
+* Updated restify lib ([@yucun](https://github.com/liyucun/)) in [#472](https://github.com/apollographql/apollo-server/issues/472)
+* Updated package apollo-server-micro, updated micro in devDependencies and peerDependencies to ^8.0.1
+
+### v1.0.3
+
+* Revert [#463](https://github.com/apollographql/graphql-server/pull/463),
+  because it's a breaking change that shouldn't have been a patch update.
+
+### v1.0.2
+* Rename packages from graphql-server- to apollo-server- [#465](https://github.com/apollographql/apollo-server/pull/465). We'll continue to publish `graphql-server-` packages that depend on the renamed `apollo-server-` packages for the time being, to ensure backwards compatibility.
 
 ### v1.0.1
 * Fix Express package not calling the callback on completion ([@chemdrew](https://github.com/chemdrew)) in [#463](https://github.com/apollographql/graphql-server/pull/463)
@@ -33,7 +63,6 @@
 
 ### v0.7.1
 * Fix graphiql fetcher to use endpointURL parameter instead of hardcoded URI.[#365](https://github.com/apollographql/graphql-server/issues/356)
-
 
 ### v0.7.0
 * Add Zeit Micro Integration [#324](https://github.com/apollographql/graphql-server/issues/324)
